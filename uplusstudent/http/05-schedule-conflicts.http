@@ -1,0 +1,35 @@
+### UStudent API - Schedule & Conflict Detection Endpoints
+### Base URL: http://localhost:8080
+
+### Check CS101 Conflicts for Student 1 (empty schedule)
+GET http://localhost:8080/api/courses/1/conflicts?studentId=1
+
+### Check CS201 Conflicts for Student 1
+GET http://localhost:8080/api/courses/2/conflicts?studentId=1
+
+### Check MATH101 Conflicts for Student 1 (should conflict with CS101)
+GET http://localhost:8080/api/courses/3/conflicts?studentId=1
+
+### Check Conflicts for Different Semester
+GET http://localhost:8080/api/courses/1/conflicts?studentId=1&semester=SPRING2025
+
+### Get Student 1's Current Schedule
+GET http://localhost:8080/api/students/1/schedule
+
+### Get Student 2's Current Schedule
+GET http://localhost:8080/api/students/2/schedule
+
+### Get Schedule for Specific Semester
+GET http://localhost:8080/api/students/1/schedule?semester=FALL2024
+
+### Test Conflict Scenario: Enroll in conflicting courses
+# First enroll in CS101 (MWF 9:00-10:30)
+POST http://localhost:8080/api/courses/1/enroll?studentId=1
+
+###
+# Then try MATH101 (MWF 9:30-11:00) - should conflict
+POST http://localhost:8080/api/courses/3/enroll?studentId=1
+
+###
+# Then try CS201 (TTh 11:00-12:30) - should work, no conflict
+POST http://localhost:8080/api/courses/2/enroll?studentId=1

@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars and fill in. NEVER commit terraform.tfvars.
+
+# AWS
+aws_region  = "us-east-1"
+environment = "production"
+app_name    = "ustudent"
+
+# RDS — pick something better than the example.
+db_password = "change-me-to-a-real-password"
+
+# LLM provider — default Groq (free, 14400 RPD).
+# Same env-var conventions as ustudent-ai/.env.
+llm_api_key  = "gsk_your_groq_key_here"
+llm_base_url = "https://api.groq.com/openai/v1"
+llm_model    = "llama-3.3-70b-versatile"
+
+# Optional
+# domain_name = "yourdomain.com"

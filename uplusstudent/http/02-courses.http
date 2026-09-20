@@ -1,0 +1,23 @@
+### UStudent API - Course Management Endpoints
+### Base URL: http://localhost:8080
+
+### Get All Courses
+GET http://localhost:8080/api/courses
+
+### Get Available Courses for Student 1
+GET http://localhost:8080/api/courses?studentId=1
+
+### Get Available Courses for Student 2
+GET http://localhost:8080/api/courses?studentId=2
+
+### Check Course Schedules (Debug)
+GET http://localhost:8080/api/test/schedules
+
+### Check CS101 Schedule
+GET http://localhost:8080/api/test/schedules/1
+
+### Check CS201 Schedule
+GET http://localhost:8080/api/test/schedules/2
+
+### Check MATH101 Schedule
+GET http://localhost:8080/api/test/schedules/3

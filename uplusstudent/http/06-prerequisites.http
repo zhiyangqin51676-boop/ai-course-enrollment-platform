@@ -1,0 +1,32 @@
+### UStudent API - Prerequisites & Eligibility Endpoints
+### Base URL: http://localhost:8080
+
+### Check CS101 Eligibility for Student 1 (no prerequisites)
+GET http://localhost:8080/api/courses/1/eligibility?studentId=1
+
+### Check CS101 Eligibility for Student 2 (no prerequisites)
+GET http://localhost:8080/api/courses/1/eligibility?studentId=2
+
+### Check CS201 Eligibility for Student 1 (requires CS101 + Sophomore + 30 credits)
+GET http://localhost:8080/api/courses/2/eligibility?studentId=1
+
+### Check CS201 Eligibility for Student 2 (should fail multiple requirements)
+GET http://localhost:8080/api/courses/2/eligibility?studentId=2
+
+### Check MATH201 Eligibility for Student 1 (requires MATH101 + 2.5 GPA)
+GET http://localhost:8080/api/courses/4/eligibility?studentId=1
+
+### Check MATH201 Eligibility for Student 2 (requires MATH101 + 2.5 GPA)
+GET http://localhost:8080/api/courses/4/eligibility?studentId=2
+
+### Check ENG101 Eligibility for Student 1 (no special requirements)
+GET http://localhost:8080/api/courses/5/eligibility?studentId=1
+
+### Check ENG101 Eligibility for Student 2 (no special requirements)
+GET http://localhost:8080/api/courses/5/eligibility?studentId=2
+
+### Get Eligible Courses for Student 1
+GET http://localhost:8080/api/students/1/eligible-courses
+
+### Get Eligible Courses for Student 2
+GET http://localhost:8080/api/students/2/eligible-courses

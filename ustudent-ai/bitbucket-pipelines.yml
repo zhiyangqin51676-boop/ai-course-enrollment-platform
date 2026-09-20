@@ -1,0 +1,94 @@
+# Bitbucket Pipelines for ustudent-ai.
+#
+# - Every push (any branch): install deps + run tests. Fast safety net.
+# - Push to `main`:           also build image, push to ECR, kick ECS deploy.
+#
+# Required Bitbucket Repository Variables (set under Repository settings ->
+# Pipelines -> Repository variables). All marked Secured where appropriate:
+#   AWS_ACCESS_KEY_ID         (Secured)
+#   AWS_SECRET_ACCESS_KEY     (Secured)
+#   AWS_REGION                e.g. us-east-1
+#   AWS_ACCOUNT_ID            e.g. 123456789012
+#   ECR_REPOSITORY            ustudent-ai
+#   ECS_CLUSTER               ustudent-production-cluster
+#   ECS_SERVICE               ustudent-production-ai
+
+image: python:3.11-slim
+
+definitions:
+  caches:
+    pip-system: ~/.cache/pip
+  steps:
+    - step: &test
+        name: Install + test
+        caches:
+          - pip-system
+        script:
+          - pip install --upgrade pip
+          - pip install -r requirements.txt -r requirements-dev.txt
+          # Tests must not require LLM_API_KEY — see tests/test_*.py mocks.
+          - pytest -v
+
+    - step: &build-and-push
+        name: Build & push to ECR
+        services: [docker]
+        size: 2x
+        script:
+          - apt-get update && apt-get install -y --no-install-recommends curl unzip
+          # Install AWS CLI v2 (smaller than the python wrapper, no Python deps).
+          - curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscli.zip
+          - unzip -q awscli.zip && ./aws/install
+          - aws --version
+          # Login to ECR.
+          - aws ecr get-login-password --region "$AWS_REGION" |
+              docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          # Build for amd64 explicitly — ARM Mac runners would otherwise push
+          # an arm64 image that ECS Fargate (amd64 by default) won't run.
+          # Bitbucket runners are amd64 already, but `--platform` makes it
+          # impossible to ship the wrong arch by accident if someone moves
+          # this off Bitbucket Cloud.
+          - docker buildx create --use --name builder 2>/dev/null || docker buildx use builder
+          - export IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY"
+          - export TAG="$BITBUCKET_COMMIT"
+          - docker buildx build
+              --platform linux/amd64
+              --push
+              -t "$IMAGE_URI:latest"
+              -t "$IMAGE_URI:$TAG"
+              .
+          - echo "Pushed $IMAGE_URI:$TAG"
+        artifacts:
+          - image-tag.txt
+
+    - step: &deploy
+        name: Deploy to ECS
+        deployment: production
+        # `trigger: manual` makes this a click-to-deploy step — students see
+        # the pipeline pause until someone hits the button. Lesson 11 talks
+        # about why this matters (deployment gate / human-in-the-loop).
+        trigger: manual
+        script:
+          - apt-get update && apt-get install -y --no-install-recommends curl unzip
+          - curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscli.zip
+          - unzip -q awscli.zip && ./aws/install
+          - aws ecs update-service
+              --cluster "$ECS_CLUSTER"
+              --service "$ECS_SERVICE"
+              --force-new-deployment
+              --region "$AWS_REGION"
+          # Wait so the pipeline only reports success once the new tasks are healthy.
+          - aws ecs wait services-stable
+              --cluster "$ECS_CLUSTER"
+              --services "$ECS_SERVICE"
+              --region "$AWS_REGION"
+
+pipelines:
+  # Any branch other than main: only test. Cheap, fast, every commit.
+  default:
+    - step: *test
+
+  branches:
+    main:
+      - step: *test
+      - step: *build-and-push
+      - step: *deploy

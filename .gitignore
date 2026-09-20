@@ -1,0 +1,21 @@
+# Private configuration
+.env
+.env.*
+!.env.example
+*.tfvars
+*.tfvars.json
+*.tfstate
+*.tfstate.*
+.terraform/
+# Generated files
+node_modules/
+.gradle/
+build/
+dist/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+.DS_Store

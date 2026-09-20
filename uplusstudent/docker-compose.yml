@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ustudent-postgres
+    environment:
+      POSTGRES_DB: ustudent
+      POSTGRES_USER: ustudent
+      POSTGRES_PASSWORD: ustudent123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ustudent -d ustudent"]
+      interval: 10s
+      timeout: 8s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

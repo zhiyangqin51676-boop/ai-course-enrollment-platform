@@ -1,0 +1,130 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    # Logging
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log warn;
+
+    # Performance
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/ld+json
+        application/manifest+json
+        application/rss+xml
+        application/vnd.geo+json
+        application/vnd.ms-fontobject
+        application/x-font-ttf
+        application/x-web-app-manifest+json
+        application/xhtml+xml
+        application/xml
+        font/opentype
+        image/bmp
+        image/svg+xml
+        image/x-icon
+        text/cache-manifest
+        text/css
+        text/plain
+        text/vcard
+        text/vnd.rim.location.xloc
+        text/vtt
+        text/x-component
+        text/x-cross-domain-policy;
+
+    server {
+        listen 80;
+        listen [::]:80;          # IPv6, so docker-compose's wget healthcheck (which resolves localhost -> ::1) succeeds.
+        server_name localhost;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "no-referrer-when-downgrade" always;
+        add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+
+        # Handle client-side routing
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+
+        # Proxy /api/* to the backend. Uses the same resolver + variable trick as
+        # /ai/ below (see the long comment there) so a backend task restart /
+        # IP change doesn't strand nginx on a stale IP. In production the ALB rule
+        # forwards /api/* to the backend target group before nginx sees it.
+        location /api/ {
+            resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+            set $backend_upstream ${BACKEND_UPSTREAM};
+            proxy_pass http://$backend_upstream;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Proxy /ai/* to the ustudent-ai FastAPI service (RAG, agent, etc).
+        #
+        # CRITICAL — proxy_pass MUST use a variable (set $ai_upstream ...) + a
+        # `resolver`, NOT a literal hostname. With a literal, nginx resolves the
+        # service-discovery name ONCE at startup and caches that IP forever. When
+        # the AI Fargate task restarts it gets a NEW IP; nginx keeps hitting the
+        # dead one and every /ai request 504s (connect timeout). The variable +
+        # resolver force re-resolution per the DNS TTL (10s), following the new IP.
+        #
+        # `rewrite` strips the /ai/ prefix — the trailing-slash-on-proxy_pass trick
+        # stops working once proxy_pass contains a variable:
+        #   /ai/agent-chat -> /agent-chat
+        location /ai/ {
+            resolver ${DNS_RESOLVER} valid=10s ipv6=off;
+            set $ai_upstream ${AI_UPSTREAM};
+            rewrite ^/ai/(.*)$ /$1 break;
+            proxy_pass http://$ai_upstream;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            # Agent turns can take 10-30s (Groq round-trip + tool calls).
+            proxy_read_timeout 90s;
+            proxy_connect_timeout 10s;
+        }
+    }
+}

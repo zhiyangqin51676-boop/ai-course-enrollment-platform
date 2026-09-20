@@ -1,0 +1,70 @@
+{
+  "_comment": "Lesson 4 test set. The task: given a student's natural-language utterance, extract intent and the course code(s). intent is one of {enrol, withdraw, query, unknown}. course_codes is a list (may be empty). Used to compare prompt versions A/B/C in lesson 4 and to seed the agent's intent parser in lesson 9.",
+  "schema": {
+    "intent": "one of: enrol | withdraw | query | unknown",
+    "course_codes": "list of course codes mentioned, or empty list",
+    "confidence": "model self-estimate in [0,1]"
+  },
+  "cases": [
+    {
+      "id": "c1",
+      "input": "I want to drop CS201",
+      "expected": {"intent": "withdraw", "course_codes": ["CS201"]},
+      "notes": "straightforward"
+    },
+    {
+      "id": "c2",
+      "input": "Enroll me in CS101 please",
+      "expected": {"intent": "enrol", "course_codes": ["CS101"]},
+      "notes": "straightforward"
+    },
+    {
+      "id": "c3",
+      "input": "What does CS201 cover?",
+      "expected": {"intent": "query", "course_codes": ["CS201"]},
+      "notes": "query intent"
+    },
+    {
+      "id": "c4",
+      "input": "Sign me up for data structures",
+      "expected": {"intent": "enrol", "course_codes": ["CS201"]},
+      "notes": "implicit course — requires knowing CS201 = Data Structures and Algorithms"
+    },
+    {
+      "id": "c5",
+      "input": "I'd like to drop MATH101 and ENG101",
+      "expected": {"intent": "withdraw", "course_codes": ["MATH101", "ENG101"]},
+      "notes": "two courses in one utterance — tests list handling"
+    },
+    {
+      "id": "c6",
+      "input": "Add MATH201 and tell me what CS201 is about",
+      "expected": {"intent": "enrol", "course_codes": ["MATH201"]},
+      "notes": "mixed intents — instruction should say 'pick the primary action'; CS201 is mentioned but not the action target"
+    },
+    {
+      "id": "c7",
+      "input": "Today's weather is nice",
+      "expected": {"intent": "unknown", "course_codes": []},
+      "notes": "out-of-scope — must NOT hallucinate a course"
+    },
+    {
+      "id": "c8",
+      "input": "How do I withdraw from a class?",
+      "expected": {"intent": "query", "course_codes": []},
+      "notes": "asks about the process, not about a specific course — should be query not withdraw"
+    },
+    {
+      "id": "c9",
+      "input": "calculus 1",
+      "expected": {"intent": "query", "course_codes": ["MATH101"]},
+      "notes": "minimal phrasing — should default to query when no verb"
+    },
+    {
+      "id": "c10",
+      "input": "I want to drop the linear algebra class but also add english composition",
+      "expected": {"intent": "withdraw", "course_codes": ["MATH201"]},
+      "notes": "two intents — must pick the primary one (drop first-mentioned) and not silently swallow the add. Hardest case."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+# Multi-stage build for production
+FROM node:18-alpine AS build
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --omit=dev
+
+# Set production API URL environment variable
+ENV REACT_APP_API_BASE_URL=/api
+
+# Copy source code
+COPY . .
+
+# Build the app for production
+RUN npm run build
+
+# Production stage with nginx
+FROM nginx:alpine
+
+# nginx.conf is rendered from a template at container start (upstream hosts via
+# env vars) so ONE image works both locally (docker-compose service names) and
+# on AWS ECS (service-discovery FQDNs). Without this the deployed frontend has
+# no /api or /ai proxy and the chat section can't reach the AI service.
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+COPY docker-entrypoint.d/10-render-nginx-conf.sh /docker-entrypoint.d/10-render-nginx-conf.sh
+RUN chmod +x /docker-entrypoint.d/10-render-nginx-conf.sh
+
+# Copy built app to nginx
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Create nginx cache directory
+RUN mkdir -p /var/cache/nginx
+
+# Expose port 80
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

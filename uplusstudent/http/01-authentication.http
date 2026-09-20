@@ -1,0 +1,44 @@
+### UStudent API - Authentication Endpoints
+### Base URL: http://localhost:8080
+
+### Login as Student (John)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "john_student",
+  "password": "test"
+}
+
+### Login as Student (Jane)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "jane_student"
+}
+
+### Login as Teacher (Dr. Wilson)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "prof_wilson"
+}
+
+### Login as Teacher (Dr. Brown)
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "prof_brown"
+}
+
+### Test Invalid Login
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "invalid_user",
+  "password": "password"
+}

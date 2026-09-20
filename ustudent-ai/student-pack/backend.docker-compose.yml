@@ -1,0 +1,55 @@
+# U+ AI Bootcamp — 本地后端(给作品二 / AI-3 起以后用)
+#
+# 从 AI-3(第 8 课)起, 你的 Agent 有 get_course / enrol 两个工具会真打后端。
+# 这个 compose 只起【postgres + 后端】两件, 用预建 Docker Hub 镜像, 不用源码、
+# 不用 build。你自己的 AI 服务(agent / RAG)还是在 venv 里 `python ...` 跑,
+# 通过 localhost:8080 连这个后端。
+#
+# 用法:
+#   docker-compose -f backend.docker-compose.yml up -d
+#   # 等 ~30-60s 后端跑完数据库 migration, 然后验证:
+#   curl http://localhost:8080/api/courses          # 应返 5 门课
+#   curl http://localhost:8080/actuator/health      # 应 {"status":"UP"}
+#
+# 关掉:
+#   docker-compose -f backend.docker-compose.yml down          # 停(数据保留)
+#   docker-compose -f backend.docker-compose.yml down -v       # 停 + 清数据(想重置时)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ustudent-postgres
+    environment:
+      POSTGRES_DB: ustudent
+      POSTGRES_USER: ustudent
+      POSTGRES_PASSWORD: ustudent123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ustudent -d ustudent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  ustudent-backend:
+    image: uplusdockerhub/ustudent-backend:latest
+    container_name: ustudent-backend
+    environment:
+      # compose 内部 DNS: 后端用服务名 "postgres" 连数据库
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ustudent
+      SPRING_DATASOURCE_USERNAME: ustudent
+      SPRING_DATASOURCE_PASSWORD: ustudent123
+    ports:
+      - "8080:8080"        # 你 venv 里的 agent 通过 localhost:8080 连它
+    depends_on:
+      postgres:
+        condition: service_healthy   # 等 postgres 健康了再起后端
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

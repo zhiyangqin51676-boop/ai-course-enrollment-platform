@@ -1,0 +1,61 @@
+{
+  "_comment": "Golden set for the ustudent-handbook RAG system. Used informally in lesson 7 for workshop acceptance, formally in lesson 10 for evaluation. Each item has a question, a reference answer, and a flag for whether the handbook actually contains the answer (used to test the 'I don't know' fallback).",
+  "items": [
+    {
+      "id": "g1",
+      "q": "How many credits do I need to graduate?",
+      "ref": "120 credits, with a cumulative GPA of at least 2.0.",
+      "in_handbook": true,
+      "expected_source_section": "§2 Credits and Graduation Requirements"
+    },
+    {
+      "id": "g2",
+      "q": "What is the maximum credits I can take in one semester?",
+      "ref": "18 credits. To exceed 18 you need a GPA of 3.5 or higher and written approval from Academic Advising.",
+      "in_handbook": true,
+      "expected_source_section": "§2"
+    },
+    {
+      "id": "g3",
+      "q": "Can a freshman take CS201?",
+      "ref": "Usually not. CS201 requires sophomore standing or higher and at least 30 completed credit hours, plus CS101 as a prerequisite.",
+      "in_handbook": true,
+      "expected_source_section": "§4 Prerequisites or FAQ Q4"
+    },
+    {
+      "id": "g4",
+      "q": "How is GPA calculated?",
+      "ref": "GPA is the credit-weighted average of grade points across graded courses. Multiply each course's grade points by its credits, sum, then divide by total credits. Withdrawn (W) and incomplete (I) courses are excluded.",
+      "in_handbook": true,
+      "expected_source_section": "§7 Grades, GPA, and Repeating Courses"
+    },
+    {
+      "id": "g5",
+      "q": "What is the difference between dropping and withdrawing?",
+      "ref": "Dropping happens in Weeks 1-4 and removes the course from your transcript entirely (full or partial refund depending on week). Withdrawing happens in Weeks 5-8, leaves a W on the transcript, does not affect GPA, and carries no refund.",
+      "in_handbook": true,
+      "expected_source_section": "§1, §9, FAQ Q6"
+    },
+    {
+      "id": "g6",
+      "q": "When is the last day to drop a course with a full refund?",
+      "ref": "The end of Week 2.",
+      "in_handbook": true,
+      "expected_source_section": "§1 or §9"
+    },
+    {
+      "id": "g7",
+      "q": "What AWS region does the ustudent system run in?",
+      "ref": "<no answer in handbook>",
+      "in_handbook": false,
+      "expected_source_section": null
+    },
+    {
+      "id": "g8",
+      "q": "How do I appeal a final grade?",
+      "ref": "<no answer in handbook>",
+      "in_handbook": false,
+      "expected_source_section": null
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+### UStudent API - Drop Course Endpoints
+### Base URL: http://localhost:8080
+
+### Student 1 Drops CS101
+DELETE http://localhost:8080/api/courses/1/drop?studentId=1
+
+### Student 1 Drops MATH101
+DELETE http://localhost:8080/api/courses/3/drop?studentId=1
+
+### Student 1 Drops CS201
+DELETE http://localhost:8080/api/courses/2/drop?studentId=1
+
+### Student 2 Drops CS101
+DELETE http://localhost:8080/api/courses/1/drop?studentId=2
+
+### Test Dropping Non-Enrolled Course (should fail)
+DELETE http://localhost:8080/api/courses/2/drop?studentId=1
+
+### Test Invalid Student ID
+DELETE http://localhost:8080/api/courses/1/drop?studentId=999
+
+### Test Invalid Course ID
+DELETE http://localhost:8080/api/courses/999/drop?studentId=1

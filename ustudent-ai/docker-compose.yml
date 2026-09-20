@@ -1,0 +1,82 @@
+# One-shot bring-up for the whole U+ stack used in the bootcamp:
+#   postgres → ustudent-backend (Spring Boot) → ustudent-frontend (React) → ustudent-ai (FastAPI)
+#
+# Paths are relative to this file, assuming the bootcamp folder layout:
+#   2026July软工+AI营/
+#     ├── ustudent-ai/        ← you are here
+#     ├── uplusstudent/       ← backend (sibling)
+#     └── uplusstudent-frontend/   ← frontend (sibling)
+#
+# Lesson 1 has students run `docker-compose up -d` from THIS file.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ustudent-postgres
+    environment:
+      POSTGRES_DB: ustudent
+      POSTGRES_USER: ustudent
+      POSTGRES_PASSWORD: ustudent123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ustudent -d ustudent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  ustudent-backend:
+    build:
+      context: ../uplusstudent
+      dockerfile: Dockerfile
+    container_name: ustudent-backend
+    environment:
+      # Override the hardcoded localhost in application.properties
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ustudent
+      SPRING_DATASOURCE_USERNAME: ustudent
+      SPRING_DATASOURCE_PASSWORD: ustudent123
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ustudent-frontend:
+    build:
+      context: ../uplusstudent-frontend
+      # Use Dockerfile.production: it copies our custom nginx.conf which has
+      # SPA fallback (so /dashboard refresh works) AND proxies /api/* to the
+      # backend container. The default Dockerfile uses vanilla nginx and
+      # breaks both of those.
+      dockerfile: Dockerfile.production
+    container_name: ustudent-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - ustudent-backend
+    restart: unless-stopped
+
+  ustudent-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ustudent-ai
+    env_file:
+      - .env
+    environment:
+      # Compose-internal DNS — `ustudent-backend` resolves to the backend container.
+      USTUDENT_BACKEND_URL: http://ustudent-backend:8080
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ustudent-backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

@@ -1,0 +1,46 @@
+# Pinned for reproducible classroom demos.
+# Re-verify versions before each cohort start; LLM SDKs move fast.
+
+# Web framework
+fastapi==0.138.0
+uvicorn[standard]==0.32.1
+pydantic==2.13.4
+pydantic-settings==2.6.1
+
+# LLM client (lesson 3+).
+# We talk OpenAI-compatible APIs — works with Groq, OpenAI, OpenRouter,
+# GitHub Models, Together, and most others by changing only .env.
+# Version chosen for compatibility with langchain-openai 0.2.14 below.
+openai==1.109.1
+
+# HTTP (lesson 3 hand-rolled version + general use)
+httpx==0.28.1
+requests==2.32.3
+
+# Env
+python-dotenv==1.0.1
+
+# Vector DB (lesson 5+). Bundles the default all-MiniLM-L6-v2 embedding model
+# (~80 MB, downloaded on first use, then cached locally).
+chromadb==0.5.23
+
+# Explicit sentence-transformers: 作品一's scripts/rag.py embeds queries with it
+# directly, so it's a RUNTIME dependency of the deployed service (the Docker
+# image builds the index + serves /rag-ask with it). PINNED to 3.x: chromadb
+# 0.5.23 caps tokenizers<=0.20.3 → transformers 4.46 → huggingface-hub<1.0;
+# sentence-transformers 5.x pulls hub>=1.0 and breaks the stack.
+# NOTE: this pulls torch, which is why the production image is ~2 GB.
+sentence-transformers>=3.0,<4.0
+huggingface-hub<1.0
+
+# Agent stack (lesson 8/9).
+# LangChain/LangGraph version drift is real — pin these and re-verify before
+# every cohort. langchain-openai talks to any OpenAI-compatible endpoint, so
+# the same code drives Groq, OpenAI, GitHub Models, etc.
+langgraph==0.2.61
+langchain-core==0.3.28
+langchain-openai==0.2.14
+
+# Model Context Protocol — official Python SDK.
+# We use FastMCP (the high-level wrapper) which was added in 1.16+.
+mcp==1.28.0

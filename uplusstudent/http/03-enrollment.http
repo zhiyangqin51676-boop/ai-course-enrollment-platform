@@ -1,0 +1,32 @@
+### UStudent API - Enrollment Management Endpoints
+### Base URL: http://localhost:8080
+
+### Student 1 Enrolls in CS101
+POST http://localhost:8080/api/courses/1/enroll?studentId=1
+
+### Student 1 Enrolls in MATH101
+POST http://localhost:8080/api/courses/3/enroll?studentId=1
+
+### Student 1 Enrolls in CS201 (requires CS101 prerequisite)
+POST http://localhost:8080/api/courses/2/enroll?studentId=1
+
+### Student 2 Enrolls in CS101
+POST http://localhost:8080/api/courses/1/enroll?studentId=2
+
+### Student 2 Enrolls in CS201 (should fail - missing prerequisites)
+POST http://localhost:8080/api/courses/2/enroll?studentId=2
+
+### Test Duplicate Enrollment (should fail)
+POST http://localhost:8080/api/courses/1/enroll?studentId=1
+
+### Test Invalid Student ID
+POST http://localhost:8080/api/courses/1/enroll?studentId=999
+
+### Test Invalid Course ID
+POST http://localhost:8080/api/courses/999/enroll?studentId=1
+
+### Get Student 1's Enrolled Courses
+GET http://localhost:8080/api/me/courses?studentId=1
+
+### Get Student 2's Enrolled Courses
+GET http://localhost:8080/api/me/courses?studentId=2

@@ -1,0 +1,77 @@
+# U+ AI Bootcamp — student local stack.
+#
+# Runs the entire four-piece stack from pre-built Docker Hub images.
+# You do NOT need any of the source repos for this file to work.
+#
+# Setup:
+#   1. Put this file + .env in an empty folder
+#   2. Fill .env (see .env.example)
+#   3. docker-compose up -d
+#   4. Wait ~30-60s for backend to finish DB migrations, then open:
+#       - React frontend:   http://localhost:3000
+#       - Backend health:   http://localhost:8080/actuator/health
+#       - AI service docs:  http://localhost:8000/docs
+#
+# Login as john_student / jane_student (see the handbook) or use the
+# 💬 AI Chat page top-right after logging in.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ustudent-postgres
+    environment:
+      POSTGRES_DB: ustudent
+      POSTGRES_USER: ustudent
+      POSTGRES_PASSWORD: ustudent123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ustudent -d ustudent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  ustudent-backend:
+    image: uplusdockerhub/ustudent-backend:latest
+    container_name: ustudent-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ustudent
+      SPRING_DATASOURCE_USERNAME: ustudent
+      SPRING_DATASOURCE_PASSWORD: ustudent123
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ustudent-frontend:
+    image: uplusdockerhub/ustudent-frontend:latest
+    container_name: ustudent-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - ustudent-backend
+    restart: unless-stopped
+
+  ustudent-ai:
+    image: uplusdockerhub/ustudent-ai:latest
+    container_name: ustudent-ai
+    env_file:
+      - .env
+    environment:
+      # Compose-internal DNS — the backend container is reachable at this name.
+      USTUDENT_BACKEND_URL: http://ustudent-backend:8080
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ustudent-backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local

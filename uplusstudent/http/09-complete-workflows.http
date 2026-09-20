@@ -1,0 +1,78 @@
+### UStudent API - Complete Test Workflows
+### Base URL: http://localhost:8080
+
+### === WORKFLOW 1: Student Course Selection Flow ===
+
+### 1. Login as student
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "username": "john_student"
+}
+
+### 2. View available courses
+GET http://localhost:8080/api/courses?studentId=1
+
+### 3. Check student profile
+GET http://localhost:8080/api/students/1/profile
+
+### 4. Check CS101 eligibility (should be eligible)
+GET http://localhost:8080/api/courses/1/eligibility?studentId=1
+
+### 5. Enroll in CS101
+POST http://localhost:8080/api/courses/1/enroll?studentId=1
+
+### 6. Check current schedule
+GET http://localhost:8080/api/students/1/schedule
+
+### 7. Check CS201 eligibility (should now meet prerequisite)
+GET http://localhost:8080/api/courses/2/eligibility?studentId=1
+
+### 8. Enroll in CS201
+POST http://localhost:8080/api/courses/2/enroll?studentId=1
+
+### 9. Check final enrolled courses
+GET http://localhost:8080/api/me/courses?studentId=1
+
+### === WORKFLOW 2: Conflict Detection Test ===
+
+### 1. Enroll in MATH101 (MWF 9:30-11:00)
+POST http://localhost:8080/api/courses/3/enroll?studentId=2
+
+### 2. Check current schedule
+GET http://localhost:8080/api/students/2/schedule
+
+### 3. Check CS101 conflicts (should conflict - MWF 9:00-10:30 vs 9:30-11:00)
+GET http://localhost:8080/api/courses/1/conflicts?studentId=2
+
+### 4. Try to enroll in CS101 (should fail due to conflict)
+POST http://localhost:8080/api/courses/1/enroll?studentId=2
+
+### 5. Check CS201 conflicts (TTh - should be fine)
+GET http://localhost:8080/api/courses/2/conflicts?studentId=2
+
+### === WORKFLOW 3: Prerequisites Enforcement ===
+
+### 1. Check CS201 eligibility for Student 2 (should fail multiple requirements)
+GET http://localhost:8080/api/courses/2/eligibility?studentId=2
+
+### 2. Try to enroll in CS201 (should fail)
+POST http://localhost:8080/api/courses/2/enroll?studentId=2
+
+### 3. Check what Student 2 needs
+GET http://localhost:8080/api/students/2/profile
+
+### === WORKFLOW 4: Drop Course Test ===
+
+### 1. Check current enrollments
+GET http://localhost:8080/api/me/courses?studentId=1
+
+### 2. Drop a course
+DELETE http://localhost:8080/api/courses/1/drop?studentId=1
+
+### 3. Verify course was dropped
+GET http://localhost:8080/api/me/courses?studentId=1
+
+### 4. Check updated schedule
+GET http://localhost:8080/api/students/1/schedule

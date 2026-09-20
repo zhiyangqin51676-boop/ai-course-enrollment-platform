@@ -1,0 +1,8 @@
+-r requirements.txt
+
+pytest==8.3.4
+pytest-asyncio==0.24.0
+
+# NOTE: sentence-transformers + huggingface-hub moved to requirements.txt —
+# the deployed RAG (作品一) needs them at runtime, so they're production deps now.
+# They still install here via the `-r requirements.txt` line above.

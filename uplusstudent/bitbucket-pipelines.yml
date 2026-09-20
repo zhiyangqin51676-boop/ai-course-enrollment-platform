@@ -1,0 +1,76 @@
+# Pipeline configuration with branch-specific workflows
+# Non-main branches: build, test, lint, security scan only
+# Main branch: all steps including staging and production deployments
+
+image: amazoncorretto:21
+
+definitions:
+  services:
+    docker:
+      memory: 2048
+
+pipelines:
+  # Default pipeline for non-main branches (feature branches, etc.)
+  default:
+    - parallel:
+      - step:
+          name: 'Build and Test'
+          script:
+            - chmod +x gradlew
+            - ./gradlew clean build test
+          artifacts:
+            - build/reports/**
+            - build/test-results/**
+            - build/libs/*.jar
+      - step:
+          name: 'Lint'
+          script:
+            - chmod +x gradlew
+            - ./gradlew detekt --info
+      - step:
+          name: 'Security scan'
+          script:
+            - echo "Your security scan goes here..."
+
+  # Pipeline for main branch - includes deployments
+  branches:
+    main:
+      - parallel:
+        - step:
+            name: 'Build and Test'
+            script:
+              - chmod +x gradlew
+              - ./gradlew clean build test
+            artifacts:
+              - build/reports/**
+              - build/test-results/**
+              - build/libs/*.jar
+        - step:
+            name: 'Lint'
+            script:
+              - chmod +x gradlew
+              - ./gradlew detekt --info
+        - step:
+            name: 'Security scan'
+            script:
+              - echo "Your security scan goes here..."
+      - step:
+          name: 'Build and push docker image'
+          services:
+            - docker
+          script:
+            - chmod +x gradlew
+            - ./gradlew clean build -x test
+            - chmod +x scripts/aws-ecr-setup.sh && ./scripts/aws-ecr-setup.sh
+            - chmod +x scripts/build-push-image.sh && ./scripts/build-push-image.sh
+      - step:
+          name: 'Deploy to Production'
+          deployment: production
+          trigger: 'manual'
+          script:
+            # Install AWS CLI
+            - chmod +x scripts/aws-install.sh && ./scripts/aws-install.sh
+            # Install jq
+            - yum -y install jq
+            # Run the safe deployment script
+            - chmod +x scripts/deploy-ecs.sh && ./scripts/deploy-ecs.sh

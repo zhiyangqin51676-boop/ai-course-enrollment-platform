@@ -1,0 +1,26 @@
+### UStudent API - Health Check & Debug Endpoints
+### Base URL: http://localhost:8080
+
+### Application Health Check
+GET http://localhost:8080/actuator/health
+
+### Flyway Migration Status
+GET http://localhost:8080/actuator/flyway
+
+### Debug: All Course Schedules
+GET http://localhost:8080/api/test/schedules
+
+### Debug: CS101 Schedules
+GET http://localhost:8080/api/test/schedules/1
+
+### Debug: CS201 Schedules
+GET http://localhost:8080/api/test/schedules/2
+
+### Debug: MATH101 Schedules
+GET http://localhost:8080/api/test/schedules/3
+
+### Debug: MATH201 Schedules
+GET http://localhost:8080/api/test/schedules/4
+
+### Debug: ENG101 Schedules
+GET http://localhost:8080/api/test/schedules/5

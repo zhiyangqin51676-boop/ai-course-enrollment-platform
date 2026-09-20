@@ -1,0 +1,11 @@
+### UStudent API - Student Profile Endpoints
+### Base URL: http://localhost:8080
+
+### Get Student 1 Profile (John Smith - CS Sophomore)
+GET http://localhost:8080/api/students/1/profile
+
+### Get Student 2 Profile (Jane Doe - Math Freshman)
+GET http://localhost:8080/api/students/2/profile
+
+### Test Invalid Student ID
+GET http://localhost:8080/api/students/999/profile

@@ -1,0 +1,44 @@
+# Pipeline configuration with branch-specific workflows
+# Non-main branches: build, test, lint, security scan only
+# Main branch: all steps including staging and production deployments
+
+image: atlassian/default-image:5
+
+definitions:
+  services:
+    docker:
+      memory: 2048
+
+pipelines:
+  # Default pipeline for non-main branches (feature branches, etc.)
+  default:
+    - step:
+          name: 'Build'
+          script:
+            - npm install
+            - npm run build
+  # Pipeline for main branch - includes deployments
+  branches:
+    main:
+      - step:
+          name: 'Build'
+          script:
+            - npm install
+            - npm run build
+      - step:
+          name: 'Build and push docker image'
+          services:
+            - docker
+          script:
+            - export DOCKER_BUILDKIT=0
+            - chmod +x scripts/aws-ecr-setup.sh && ./scripts/aws-ecr-setup.sh
+            - chmod +x scripts/build-push-image.sh && ./scripts/build-push-image.sh
+      - step:
+          name: 'Deploy to Production'
+          deployment: production
+          trigger: 'manual'
+          script:
+            # Install AWS CLI
+            - chmod +x scripts/aws-install.sh && ./scripts/aws-install.sh
+            # Run the safe deployment script
+            - chmod +x scripts/deploy-ecs.sh && ./scripts/deploy-ecs.sh
